@@ -72,8 +72,13 @@ int main(int argc, char **argv)
   
   // Prepare the mysql stmts
   MYSQL_STMT * artist_sel_stmt = mysql_stmt_init(&mysql);
+  if (artist_sel_stmt == NULL)
+    throw runtime_error((boost::format("mysql_stmt_init() failed: %1%") 
+      % mysql_stmt_error(artist_sel_stmt)).str());
   const char * artist_sel_stmt_str = "SELECT nation, UNIX_TIMESTAMP(updated_at) FROM lastfmnations_artists WHERE artist = ?";
-  mysql_stmt_prepare(artist_sel_stmt, artist_sel_stmt_str, strlen(artist_sel_stmt_str));
+  if (mysql_stmt_prepare(artist_sel_stmt, artist_sel_stmt_str, strlen(artist_sel_stmt_str)))
+    throw runtime_error((boost::format("mysql_stmt_prepare() failed: %1%") 
+      % mysql_stmt_error(artist_sel_stmt)).str());
   MYSQL_STMT * trigger_chk_stmt = mysql_stmt_init(&mysql);
   const char * trigger_chk_stmt_str = "SELECT * FROM lastfmnations_trigger WHERE string = ?";
   mysql_stmt_prepare(trigger_chk_stmt, trigger_chk_stmt_str, strlen(trigger_chk_stmt_str));
@@ -94,7 +99,7 @@ int main(int argc, char **argv)
     struct stat fileinfo;
     string cache_file = cache_dir + "/library-artists-" + username_encoded + ".xml.gz";
     int errcode = stat(cache_file.c_str(), &fileinfo);
-    if (errno != ENOENT && errcode != 0) {
+    if (errno != ENOENT && errcode == -1) {
       cerr << "Something went wrong in the caching area." << endl;
       exit(1);
     }
@@ -151,15 +156,66 @@ int main(int argc, char **argv)
     }
     
     for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
-      MYSQL_BIND bind;
-      bind.buffer_type= MYSQL_TYPE_STRING;
-      bind.buffer = strdup(i->Name().c_str());
-      bind.buffer_length= i->Name().length();
-      bind.is_null= 0;
-      unsigned long length = i->Name().length();
-      bind.length= &length;
-      mysql_stmt_bind_param(artist_sel_stmt, &bind);
-      mysql_stmt_execute(artist_sel_stmt);
+      MYSQL_RES * prepare_meta_result = mysql_stmt_result_metadata(artist_sel_stmt);
+      if (!prepare_meta_result)
+        throw runtime_error((boost::format("mysql_stmt_result_metadata() "
+          "returned no meta information: %1%") % mysql_stmt_error(artist_sel_stmt)).str());
+      MYSQL_BIND bind[1];
+      memset(bind, 0, sizeof(bind));
+      bind[0].buffer_type= MYSQL_TYPE_STRING;
+      bind[0].buffer = strdup(i->Name().c_str());
+      bind[0].buffer_length= i->Name().length();
+      bind[0].is_null = 0;
+      unsigned long * l = new unsigned long;
+      *l = i->Name().length();
+      bind[0].length = l;
+      mysql_stmt_bind_param(artist_sel_stmt, bind);
+      if (mysql_stmt_execute(artist_sel_stmt))
+        throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
+          % mysql_stmt_error(artist_sel_stmt)).str());
+      delete l;
+      MYSQL_BIND bind2[2];
+      my_bool is_null[2];
+      my_bool error[2];
+      unsigned long length[2];
+      int int_data;
+      char str_data[1024];
+      memset(str_data, 0, sizeof(str_data));
+      memset(bind2, 0, sizeof(bind2));
+      bind2[0].buffer_type= MYSQL_TYPE_STRING;
+      bind2[0].buffer= (char *)str_data;
+      bind2[0].buffer_length= 1024;
+      bind2[0].is_null= &is_null[0];
+      bind2[0].length= &length[0];
+      bind2[0].error= &error[0];
+      bind2[1].buffer_type= MYSQL_TYPE_LONG;
+      bind2[1].buffer= (char *)&int_data;
+      bind2[1].is_null= &is_null[1];
+      bind2[1].length= &length[1];
+      bind2[1].error= &error[1];
+      if (mysql_stmt_bind_result(artist_sel_stmt, bind2))
+        throw runtime_error((boost::format("mysql_stmt_bind_param() failed: %1%")
+          % mysql_stmt_error(artist_sel_stmt)).str());
+      if (mysql_stmt_store_result(artist_sel_stmt))
+        throw runtime_error((boost::format("mysql_stmt_store_result() failed: %1%")
+          % mysql_stmt_error(artist_sel_stmt)).str());
+      bool trigger = false;
+      string result = "Unknown";
+      if (mysql_stmt_fetch(artist_sel_stmt)) {
+        trigger = true;
+        throw runtime_error((boost::format("mysql_stmt_fetch() failed: %1%")
+          % mysql_stmt_error(artist_sel_stmt)).str());
+      } else {
+        // Is classified, get result
+        if (int_data < time(NULL) - 14*24*60*60) {
+          trigger = true;
+        }
+        result = str_data;
+      }
+      mysql_free_result(prepare_meta_result);
+      if (trigger) {
+        // TODO Sent trigger
+      }
     }
   // else if result cached
   // ... TODO
