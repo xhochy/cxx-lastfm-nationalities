@@ -3,6 +3,14 @@
 #include <exception>
 #include <iostream>
 #include <fstream>
+#include <cstdio>
+#include <cerrno>
+#include <stdexcept>
+
+// POSIX/UNIX
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 // Cgicc
 #include <cgicc/Cgicc.h>
@@ -14,12 +22,19 @@
 // MySQL
 #include <mysql/mysql.h>
 
+// zlib
+#include <zlib.h>
+
+#include "base64.h"
+
 using namespace cgicc;
 using namespace std;
 using namespace Scrobbler;
 
 int main(int argc, char **argv)
 {
+  LIBXML_TEST_VERSION
+  
   // Read api-key
   ifstream api_file;
   api_file.open("api-key.txt", ifstream::in);
@@ -69,19 +84,79 @@ int main(int argc, char **argv)
   cout << HTTPContentHeader("text/x-json") << endl;
 
   // toolbox.rb begin
-  // // TODO caching in gzipped XML
-  std::vector<Artist> artists = Library(username).artists();
-  cout << artists.size() << endl;
-  for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
-  }
+  string cache_dir = "/var/cache/lastfm-nationalities";
+  string username_encoded = base64_encode(reinterpret_cast<const unsigned char*>(username.c_str()), username.length());
+  // if not cached result do
+    // Check for cached artists
+    struct stat fileinfo;
+    string cache_file = cache_dir + "/library-artists-" + username_encoded + ".xml.gz";
+    int errcode = stat(cache_file.c_str(), &fileinfo);
+    if (errno != ENOENT && errcode != 0) {
+      cerr << "Something went wrong in the caching area." << endl;
+      exit(1);
+    }
+    std::vector<Artist> artists;
+    if (errno == ENOENT || fileinfo.st_mtime + 20*24*60*60 < time(NULL)) {
+      // Cache is outdated
+      artists = Library(username).artists();
+
+      // write to cache
+      xmlChar *tmp;
+      // Create a new XML buffer, to which the XML document will be written
+      xmlBufferPtr buf = xmlBufferCreate();
+      if (buf == NULL)
+        throw runtime_error("Error creating the XML buffer");
+      // Create a new XmlWriter for memory, with no compression.
+      xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
+      if (writer == NULL)
+        throw runtime_error("Error creating the xml writer");
+      // Start the document with the xml default for the version, encoding 
+      // UTF-8 and the default for the standalone declaration.
+      int rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
+      if (rc < 0)
+        throw runtime_error("Error at xmlTextWriterStartDocument");
+      rc = xmlTextWriterStartElement(writer, BAD_CAST "artists");
+      if (rc < 0) throw runtime_error("Error at xmlTextWriterStartElement");
+     
+      for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
+        i->writeXml(writer);
+      }
+      
+      rc = xmlTextWriterEndDocument(writer);
+      if (rc < 0) throw runtime_error("Error at xmlTextWriterEndDocument");
+      xmlFreeTextWriter(writer);
+
+      gzFile zipfile = gzopen(cache_file.c_str(), "wb9");
+      gzputs(zipfile, (const char *)buf->content);
+      gzclose(zipfile);
+    } else {
+      // Read from cache
+      gzFile zipfile = gzopen(cache_file.c_str(), "rb");
+      string input;
+      char buffer[1025];
+      int count;
+      while((count = gzread(zipfile, buffer, 1024)) > 0)
+        input.append(buffer, count);
+      xmlDocPtr doc = xmlReadDoc(reinterpret_cast<const xmlChar *>(input.c_str()), NULL, NULL, 0);
+      xmlNodePtr root = xmlDocGetRootElement(doc);
+      for (xmlNodePtr node = root->children; node; node = node->next) {
+        if (xmlStrEqual(node->name, BAD_CAST "artist")) {
+          artists.push_back(Artist::parse(node));
+        }
+      }
+      xmlFreeDoc(doc);
+    }
+     
+    for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
+    }
+  // else if result cached
+  // ... TODO
+  //
   /********
                 data = []
-                  username = Base64.encode64(user.name).gsub("\n",'').gsub('/','-')
                   # Calculate the user's result not every time this code is run
-                  data = Cache.file(File.join(@@cache_dir, 'user-result-' + username + '.yml'), 4*24*60*60) do
-                    artists = Cache.file(File.join([@@cache_dir, 'user-library-artists-' + username + '.yml']), 20*24*60*60) do
-                      Scrobbler::Library.new(user.name).artists 
-                    end
+                  data = Cache.file(File.join(@@cache_dir, 'user-result-' + username_encoded + '.yml'), 4*24*60*60) do
+                    ...
                     data1 = []
                     artists.each do |t| 
                       # Only check the artists nation classified by last.fm every week
@@ -123,5 +198,8 @@ cgi.out('type' => 'text/x-json') { data.to_json }
   mysql_stmt_close(trigger_chk_stmt);
   mysql_stmt_close(trigger_ins_stmt);
   mysql_close(&mysql);
+  
+  // Cleanup LibXML
+  xmlCleanupParser();
 }
 
