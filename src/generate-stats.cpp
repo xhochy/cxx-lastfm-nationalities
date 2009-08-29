@@ -146,8 +146,17 @@ int main(int argc, char **argv)
       }
       xmlFreeDoc(doc);
     }
-     
+    
     for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
+      MYSQL_BIND bind;
+      bind.buffer_type= MYSQL_TYPE_STRING;
+      bind.buffer = strdup(i->Name().c_str());
+      bind.buffer_length= i->Name().length();
+      bind.is_null= 0;
+      unsigned long length = i->Name().length();
+      bind.length= &length;
+      mysql_stmt_bind_param(artist_sel_stmt, &bind);
+      mysql_stmt_execute(artist_sel_stmt);
     }
   // else if result cached
   // ... TODO
