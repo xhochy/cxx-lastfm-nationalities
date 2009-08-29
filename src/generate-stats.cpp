@@ -80,7 +80,7 @@ int main(int argc, char **argv)
   
   // Start output
   Cgicc cgi;
-  std::string username = cgi("username");
+  std::string username = cgi["username"]->getValue();
   cout << HTTPContentHeader("text/x-json") << endl;
 
   // toolbox.rb begin
