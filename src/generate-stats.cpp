@@ -7,6 +7,9 @@
 #include <cerrno>
 #include <stdexcept>
 
+// Boost
+#include <boost/format.hpp>
+
 // POSIX/UNIX
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -63,8 +66,8 @@ int main(int argc, char **argv)
   mysql_options(&mysql, MYSQL_READ_DEFAULT_GROUP, "lastfm-nationalities");
   if (!mysql_real_connect(&mysql, mysql_host.c_str(), mysql_user.c_str(), 
     mysql_pw.c_str(), mysql_db.c_str(), 0, NULL, 0)) {
-    fprintf(stderr, "Failed to connect to database: Error: %s\n", 
-      mysql_error(&mysql));
+    throw runtime_error((boost::format("Failed to connect to database: Error: %s") 
+      % mysql_error(&mysql)).str());
   }
   
   // Prepare the mysql stmts
