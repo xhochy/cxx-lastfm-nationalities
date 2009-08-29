@@ -13,7 +13,8 @@ find_library(LIBXML2_LIBRARY NAMES xml2 PATH /usr/lib /usr/local/lib)
 find_library(CURL_LIBRARY NAMES curl PATH /usr/lib /usr/local/lib)
 find_library(MYSQL_LIBRARY NAMES mysqlclient PATH /usr/lib /usr/local/lib)
 
-add_executable(generate-stats src/generate-stats.cpp src/base64.cpp)
+add_executable(generate-stats src/generate-stats.cpp src/ArtistData.cpp
+  src/base64.cpp)
 target_link_libraries(generate-stats ${CGICC_LIBRARY} ${SCROBBLER_LIBRARY}
   ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
 

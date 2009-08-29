@@ -28,6 +28,7 @@
 // zlib
 #include <zlib.h>
 
+#include "ArtistData.h"
 #include "base64.h"
 
 using namespace cgicc;
@@ -94,6 +95,7 @@ int main(int argc, char **argv)
   // toolbox.rb begin
   string cache_dir = "/var/cache/lastfm-nationalities";
   string username_encoded = base64_encode(reinterpret_cast<const unsigned char*>(username.c_str()), username.length());
+  vector<ArtistData> valuableData;
   // if not cached result do
     // Check for cached artists
     struct stat fileinfo;
@@ -180,7 +182,6 @@ int main(int argc, char **argv)
       unsigned long length[2];
       int int_data;
       char str_data[1024];
-      memset(str_data, 0, sizeof(str_data));
       memset(bind2, 0, sizeof(bind2));
       bind2[0].buffer_type= MYSQL_TYPE_STRING;
       bind2[0].buffer= (char *)str_data;
@@ -200,22 +201,21 @@ int main(int argc, char **argv)
         throw runtime_error((boost::format("mysql_stmt_store_result() failed: %1%")
           % mysql_stmt_error(artist_sel_stmt)).str());
       bool trigger = false;
-      string result = "Unknown";
+      string nation = "Unknown";
       if (mysql_stmt_fetch(artist_sel_stmt)) {
         trigger = true;
         throw runtime_error((boost::format("mysql_stmt_fetch() failed: %1%")
           % mysql_stmt_error(artist_sel_stmt)).str());
       } else {
         // Is classified, get result
-        if (int_data < time(NULL) - 14*24*60*60) {
-          trigger = true;
-        }
-        result = str_data;
+        if (int_data < time(NULL) - 14*24*60*60) trigger = true;
+        nation = str_data;
       }
       mysql_free_result(prepare_meta_result);
       if (trigger) {
         // TODO Sent trigger
       }
+      valuableData.push_back(ArtistData(*i, nation));
     }
   // else if result cached
   // ... TODO
@@ -225,41 +225,18 @@ int main(int argc, char **argv)
                   # Calculate the user's result not every time this code is run
                   data = Cache.file(File.join(@@cache_dir, 'user-result-' + username_encoded + '.yml'), 4*24*60*60) do
                     ...
-                    data1 = []
-                    artists.each do |t| 
-                      # Only check the artists nation classified by last.fm every week
-                      @@artist_sel_stmt.execute(t.name)
-                      data = @@artist_sel_stmt.fetch
-                      if data.nil?
-                        country = 'Unknown'
-                        self.trigger(t.name)
-                      else
-                        country = data[0]
-                        timestamp = data[1].to_i
-                        # Update artist every 2 weeks = 14*24*60*50 seconds
-                        if Time.now.to_i - 14*24*60*60 > timestamp
-                          self.trigger(t.name)
-                        end
-                      end
-                      data1 << { 
-                        'playcount' => t.playcount, 
-                        'name' => t.name, 
-                        'country' => country,  
-                        'url' => t.url
-                      }
-                    end
-                    data1
+                    ...
                   end
                   return data
   ********/
   // toolbox.rb end
-    /*
-user = Scrobbler::User.new(cgi['username'])
-data = LastFM::get_user_data(user)
-
-# Return output
-cgi.out('type' => 'text/x-json') { data.to_json }
-*/
+  
+  cout << "[";
+  for (vector<ArtistData>::const_iterator i = valuableData.begin(); i != valuableData.end(); i++) {
+    if (i != valuableData.begin()) cout << ",";
+    cout << i->toJSON();
+  }
+  cout << "]";
 
   // Cleanup MySQL
   mysql_stmt_close(artist_sel_stmt);
