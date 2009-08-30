@@ -16,8 +16,10 @@ find_library(MYSQL_LIBRARY NAMES mysqlclient PATH /usr/lib /usr/local/lib)
 add_library(lastfm-nationalities src/base64.cpp src/ArtistData.cpp src/Main.cpp)
 
 add_executable(generate-stats.cgi src/generate-stats.cpp)
+add_executable(redirect-image.cgi src/redirect-image.cpp)
 target_link_libraries(generate-stats.cgi lastfm-nationalities ${CGICC_LIBRARY} 
-  ${SCROBBLER_LIBRARY}
-  ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
+  ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
+target_link_libraries(redirect-image.cgi lastfm-nationalities ${CGICC_LIBRARY} 
+  ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
 INSTALL(TARGETS generate-stats.cgi DESTINATION bin)
 

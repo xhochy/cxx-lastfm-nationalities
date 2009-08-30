@@ -16,3 +16,13 @@ string ArtistData::toJSON() const
     "\"url\":\"%4%\"}") % this->m_name % this->m_playcount % this->m_nation
     % this->m_url).str();
 }
+
+std::string ArtistData::Nation() const
+{
+  return this->m_nation;
+}
+
+int ArtistData::Playcount() const
+{
+  return this->m_playcount;
+}

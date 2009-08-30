@@ -8,6 +8,8 @@ class ArtistData {
 public:
   ArtistData(const Scrobbler::Artist &artist, const std::string &nation);
   std::string toJSON() const;
+  std::string Nation() const;
+  int Playcount() const;
 private:
   int m_playcount;
   std::string m_nation;
