@@ -1,3 +1,6 @@
+#ifndef __LASTFM_ARTISTDATA_H__
+#define __LASTFM_ARTISTDATA_H__
+
 #include <string>
 #include <scrobbler/artist.h>
 
@@ -11,3 +14,5 @@ private:
   std::string m_name;
   std::string m_url;
 };
+
+#endif // __LASTFM_ARTISTDATA_H__s
