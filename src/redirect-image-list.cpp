@@ -60,7 +60,6 @@ int main(int argc, char **argv)
     }
     countries.erase(max_nat);
     float pc = (float)max / (float)overall;
-    cout << max_nat << endl;
     if (countries2.size() < 10) {
       playcounts.push_back(pc);
       if (max_nat == "United Kingdom") max_nat = "UK";
@@ -89,7 +88,6 @@ int main(int argc, char **argv)
   char * playcountsURL = curl_easy_escape(curl_tmp, playcounts_str.c_str(), 0);
   char * countries2URL = curl_easy_escape(curl_tmp, countries2_str.c_str(), 0); 
 
-  cout << playcounts_str << "|" << playcountsURL << endl;
   string url = (boost::format("http://chart.apis.google.com/chart?cht=bhs&chf=bg"
     ",s,e3e3e300&chtt=%1%'s|artists+by+nations&chs=300x%2%&chco=80C65A&chds=0,"
     "%3%&chd=t:%4%&chxt=y&chxl=0:|%5%") % username % (75+ countries2.size()*25)
