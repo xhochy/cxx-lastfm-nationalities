@@ -17,9 +17,13 @@ add_library(lastfm-nationalities src/base64.cpp src/ArtistData.cpp src/Main.cpp)
 
 add_executable(generate-stats.cgi src/generate-stats.cpp)
 add_executable(redirect-image.cgi src/redirect-image.cpp)
+add_executable(redirect-image-list.cgi src/redirect-image-list.cpp)
 target_link_libraries(generate-stats.cgi lastfm-nationalities ${CGICC_LIBRARY} 
   ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
 target_link_libraries(redirect-image.cgi lastfm-nationalities ${CGICC_LIBRARY} 
   ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
-INSTALL(TARGETS generate-stats.cgi redirect-image.cgi DESTINATION bin)
+target_link_libraries(redirect-image-list.cgi lastfm-nationalities ${CGICC_LIBRARY} 
+  ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
+INSTALL(TARGETS generate-stats.cgi redirect-image.cgi redirect-image-list.cgi 
+  DESTINATION bin)
 
