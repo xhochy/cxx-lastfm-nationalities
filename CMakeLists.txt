@@ -17,4 +17,5 @@ add_executable(generate-stats src/generate-stats.cpp src/ArtistData.cpp
   src/base64.cpp)
 target_link_libraries(generate-stats ${CGICC_LIBRARY} ${SCROBBLER_LIBRARY}
   ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
+INSTALL(TARGETS generate-stats DESTINATION bin)
 

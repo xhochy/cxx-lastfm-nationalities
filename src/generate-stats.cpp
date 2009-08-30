@@ -236,7 +236,7 @@ int main(int argc, char **argv)
     if (i != valuableData.begin()) cout << ",";
     cout << i->toJSON();
   }
-  cout << "]";
+  cout << "]" << endl;
 
   // Cleanup MySQL
   mysql_stmt_close(artist_sel_stmt);
