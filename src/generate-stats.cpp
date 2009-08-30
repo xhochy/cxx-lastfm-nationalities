@@ -90,7 +90,7 @@ int main(int argc, char **argv)
   // Start output
   Cgicc cgi;
   std::string username = cgi["username"]->getValue();
-  cout << HTTPContentHeader("text/x-json") << endl;
+  cout << HTTPContentHeader("text/x-json");
 
   // toolbox.rb begin
   string cache_dir = "/var/cache/lastfm-nationalities";
