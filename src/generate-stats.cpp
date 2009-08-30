@@ -41,7 +41,7 @@ int main(int argc, char **argv)
   
   // Read api-key
   ifstream api_file;
-  api_file.open("api-key.txt", ifstream::in);
+  api_file.open("/etc/cxx-lastfm-nationalities/api-key.txt", ifstream::in);
   char * key = new char[256];
   api_file.getline(key, 256);
   scobbler_api_key = string(key);
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
   // Read mysql-key
   ifstream mysql_file;
-  mysql_file.open("mysql-key.txt", ifstream::in);
+  mysql_file.open("/etc/cxx-lastfm-nationalities/mysql-key.txt", ifstream::in);
   mysql_file.getline(key, 256);
   string mysql_host = key;
   mysql_file.getline(key, 256);
