@@ -15,7 +15,7 @@ find_library(MYSQL_LIBRARY NAMES mysqlclient PATH /usr/lib /usr/local/lib)
 
 add_executable(generate-stats.cgi src/generate-stats.cpp src/ArtistData.cpp
   src/base64.cpp)
-target_link_libraries(generate-stats ${CGICC_LIBRARY} ${SCROBBLER_LIBRARY}
+target_link_libraries(generate-stats.cgi ${CGICC_LIBRARY} ${SCROBBLER_LIBRARY}
   ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
-INSTALL(TARGETS generate-stats DESTINATION bin)
+INSTALL(TARGETS generate-stats.cgi DESTINATION bin)
 
