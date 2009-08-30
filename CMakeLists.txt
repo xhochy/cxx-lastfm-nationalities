@@ -21,5 +21,5 @@ target_link_libraries(generate-stats.cgi lastfm-nationalities ${CGICC_LIBRARY}
   ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
 target_link_libraries(redirect-image.cgi lastfm-nationalities ${CGICC_LIBRARY} 
   ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
-INSTALL(TARGETS generate-stats.cgi DESTINATION bin)
+INSTALL(TARGETS generate-stats.cgi redirect-images.cgi DESTINATION bin)
 
