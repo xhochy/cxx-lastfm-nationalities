@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     }
     countries.erase(max_nat);
     float pc = (float)max / (float)overall;
-    if (countries3.size() < 10 && pc > 0.025) { // || list == 1/true
+    if (countries3.size() < 10 && pc > 0.025) { 
       playcounts.push_back(pc);
       if (max_nat == "United Kingdom") max_nat = "UK";
       if (max_nat == "United States") max_nat = "USA";

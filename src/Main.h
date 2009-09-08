@@ -1,6 +1,7 @@
 #include "ArtistData.h"
 
 #include <mysql/mysql.h>
+#include <scrobbler/artist.h>
 #include <string>
 #include <vector>
 
@@ -11,12 +12,28 @@ public:
   Main();
   ~Main();
   std::vector<ArtistData> getData(std::string username);
+  std::vector<Scrobbler::Artist> renewArtistsCache(std::string username, 
+    std::string cache_file);
 private:
   void InitMySQL();
+  void CleanupMySQL();
   void LoadAPIKey();
+  void InitArtistSelStmt();
   MYSQL_STMT * CreateStatement(const char * str);
   MYSQL m_mysql;
+  // artist_sel_stmt
   MYSQL_STMT * m_artist_sel_stmt;
+  char * m_artist_sel_name;
+  unsigned long * m_artist_sel_name_len;
+  char * m_artist_sel_nation;
+  unsigned long * m_artist_sel_nation_len;
+  my_bool * m_artist_sel_nation_is_null;
+  my_bool * m_artist_sel_nation_error;
+  int * m_artist_sel_timestamp;
+  my_bool * m_artist_sel_timestamp_is_null;
+  unsigned long * m_artist_sel_timestamp_len;
+  my_bool * m_artist_sel_timestamp_error;
+  // trigger_chk_stmt
   MYSQL_STMT * m_trigger_chk_stmt;
   MYSQL_STMT * m_trigger_ins_stmt;
   std::string m_mysql_host;
