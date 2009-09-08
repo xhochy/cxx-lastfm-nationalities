@@ -96,7 +96,8 @@ std::vector<ArtistData> Main::getData(std::string username)
     if (errno != ENOENT && errcode == -1)
       throw runtime_error("Something went wrong in the caching area.");
     std::vector<Artist> artists;
-    if (errno == ENOENT || fileinfo.st_mtime + 20*24*60*60 < time(NULL)) {
+    // Cache library for *7 days*
+    if (errno == ENOENT || fileinfo.st_mtime + 7*24*60*60 < time(NULL)) {
       // Cache is outdated
       artists = this->renewArtistsCache(username, cache_file);
     } else {
@@ -132,8 +133,26 @@ std::vector<ArtistData> Main::getData(std::string username)
         if (*(this->m_artist_sel_timestamp) < time(NULL) - 14*24*60*60) trigger = true;
         nation = this->m_artist_sel_nation;
       }
+      if (mysql_stmt_free_result(this->m_artist_sel_stmt)) 
+        throw runtime_error((boost::format("mysql_stmt_free_result() failed: %1%") 
+          % mysql_stmt_error(this->m_artist_sel_stmt)).str());
       if (trigger) {
-        // TODO Sent trigger
+        strcpy(this->m_trigger_chk_string, i->Name().c_str());
+        *(this->m_trigger_chk_string_len) = i->Name().length();
+        if (mysql_stmt_execute(this->m_trigger_chk_stmt))
+          throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
+            % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
+        // Check if already a trigger exists
+        if (mysql_stmt_fetch(this->m_trigger_chk_stmt) == 0) {
+          // there is already a trigger in the DB
+          trigger = false;
+        }
+        if (mysql_stmt_free_result(this->m_trigger_chk_stmt)) 
+          throw runtime_error((boost::format("mysql_stmt_free_result() failed: %1%") 
+            % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
+        // If we still should trigger, so post the tigger
+        if (trigger) {
+        }
       }
       valuableData.push_back(ArtistData(*i, nation));
     }

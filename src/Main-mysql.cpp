@@ -49,6 +49,36 @@ void Main::InitArtistSelStmt()
       % mysql_stmt_error(this->m_artist_sel_stmt)).str());
 }
 
+void Main::InitTriggerChkStmt()
+{
+  this->m_trigger_chk_stmt = this->CreateStatement("SELECT UNIX_TIMESTAMP(timestamp)"
+    " FROM lastfmnations_trigger WHERE string = ?");
+  MYSQL_BIND bind[1];
+  memset(bind, 0, sizeof(bind));
+  bind[0].buffer_type = MYSQL_TYPE_STRING;
+  this->m_trigger_chk_string = new char[1024];
+  bind[0].buffer = this->m_trigger_chk_string;
+  bind[0].buffer_length = 1024;
+  bind[0].is_null = 0;
+  this->m_trigger_chk_string_len = new unsigned long;
+  bind[0].length = this->m_trigger_chk_string_len;
+  mysql_stmt_bind_param(this->m_trigger_chk_stmt, bind);
+  // result
+  memset(bind, 0, sizeof(bind));
+  this->m_trigger_chk_timestamp = new int;
+  this->m_trigger_chk_timestamp_is_null = new my_bool;
+  this->m_trigger_chk_timestamp_len = new unsigned long;
+  this->m_trigger_chk_timestamp_error = new my_bool;
+  bind[0].buffer_type = MYSQL_TYPE_LONG;
+  bind[0].buffer = (char *)this->m_trigger_chk_timestamp;
+  bind[0].is_null = this->m_trigger_chk_timestamp_is_null;
+  bind[0].length = this->m_trigger_chk_timestamp_len;
+  bind[0].error = this->m_trigger_chk_timestamp_error;
+  if (mysql_stmt_bind_result(this->m_trigger_chk_stmt, bind))
+    throw runtime_error((boost::format("mysql_stmt_bind_param() failed: %1%")
+      % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
+}
+
 void Main::InitMySQL() 
 {
   // Read mysql-key
@@ -77,8 +107,7 @@ void Main::InitMySQL()
   
   // Prepare the mysql stmts
   this->InitArtistSelStmt();
-  this->m_trigger_chk_stmt = this->CreateStatement("SELECT * FROM "
-    "lastfmnations_trigger WHERE string = ?");
+  this->InitTriggerChkStmt();
   this->m_trigger_ins_stmt = this->CreateStatement("INSERT INTO "
     "lastfmnations_trigger (string) VALUES (?)");
 }
@@ -108,6 +137,12 @@ void Main::CleanupMySQL()
   delete this->m_artist_sel_timestamp_len;
   delete this->m_artist_sel_timestamp_error;
   mysql_stmt_close(this->m_artist_sel_stmt);
+  delete this->m_trigger_chk_string;
+  delete this->m_trigger_chk_string_len;
+  delete this->m_trigger_chk_timestamp;
+  delete this->m_trigger_chk_timestamp_is_null;
+  unsigned long * m_trigger_chk_timestamp_len;
+  my_bool * m_trigger_chk_timestamp_error;
   mysql_stmt_close(this->m_trigger_chk_stmt);
   mysql_stmt_close(this->m_trigger_ins_stmt);
   mysql_close(&this->m_mysql);
