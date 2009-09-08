@@ -20,6 +20,7 @@ private:
   void LoadAPIKey();
   void InitArtistSelStmt();
   void InitTriggerChkStmt();
+  void InitTriggerInsStmt();
   MYSQL_STMT * CreateStatement(const char * str);
   MYSQL m_mysql;
   // artist_sel_stmt
@@ -44,6 +45,9 @@ private:
   my_bool * m_trigger_chk_timestamp_error;
   // trigger_ins_stmt
   MYSQL_STMT * m_trigger_ins_stmt;
+  char * m_trigger_ins_string;
+  unsigned long * m_trigger_ins_string_len;
+  
   std::string m_mysql_host;
   std::string m_mysql_user;
   std::string m_mysql_db;

@@ -152,6 +152,11 @@ std::vector<ArtistData> Main::getData(std::string username)
             % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
         // If we still should trigger, so post the tigger
         if (trigger) {
+          strcpy(this->m_trigger_ins_string, i->Name().c_str());
+          *(this->m_trigger_ins_string_len) = i->Name().length();
+          if (mysql_stmt_execute(this->m_trigger_ins_stmt))
+            throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
+              % mysql_stmt_error(this->m_trigger_ins_stmt)).str());
         }
       }
       valuableData.push_back(ArtistData(*i, nation));

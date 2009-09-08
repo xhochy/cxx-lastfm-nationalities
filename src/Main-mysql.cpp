@@ -79,6 +79,22 @@ void Main::InitTriggerChkStmt()
       % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
 }
 
+void Main::InitTriggerInsStmt()
+{
+  this->m_trigger_ins_stmt = this->CreateStatement("INSERT INTO "
+    "lastfmnations_trigger (string) VALUES (?)");
+  MYSQL_BIND bind[1];
+  memset(bind, 0, sizeof(bind));
+  bind[0].buffer_type = MYSQL_TYPE_STRING;
+  this->m_trigger_ins_string = new char[1024];
+  bind[0].buffer = this->m_trigger_ins_string;
+  bind[0].buffer_length = 1024;
+  bind[0].is_null = 0;
+  this->m_trigger_ins_string_len = new unsigned long;
+  bind[0].length = this->m_trigger_ins_string_len;
+  mysql_stmt_bind_param(this->m_trigger_ins_stmt, bind);
+}
+
 void Main::InitMySQL() 
 {
   // Read mysql-key
@@ -108,8 +124,7 @@ void Main::InitMySQL()
   // Prepare the mysql stmts
   this->InitArtistSelStmt();
   this->InitTriggerChkStmt();
-  this->m_trigger_ins_stmt = this->CreateStatement("INSERT INTO "
-    "lastfmnations_trigger (string) VALUES (?)");
+  this->InitTriggerInsStmt();
 }
 
 MYSQL_STMT * Main::CreateStatement(const char * str)
@@ -141,9 +156,11 @@ void Main::CleanupMySQL()
   delete this->m_trigger_chk_string_len;
   delete this->m_trigger_chk_timestamp;
   delete this->m_trigger_chk_timestamp_is_null;
-  unsigned long * m_trigger_chk_timestamp_len;
-  my_bool * m_trigger_chk_timestamp_error;
+  delete this->m_trigger_chk_timestamp_len;
+  delete this->m_trigger_chk_timestamp_error;
   mysql_stmt_close(this->m_trigger_chk_stmt);
+  delete this->m_trigger_ins_string;
+  delete this->m_trigger_ins_string_len;
   mysql_stmt_close(this->m_trigger_ins_stmt);
   mysql_close(&this->m_mysql);
 }
