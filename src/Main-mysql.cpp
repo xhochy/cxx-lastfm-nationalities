@@ -141,17 +141,19 @@ MYSQL_STMT * Main::CreateStatement(const char * str)
 
 void Main::CleanupMySQL()
 {
-  delete this->m_artist_sel_name;
-  delete this->m_artist_sel_name_len;
-  delete this->m_artist_sel_nation;
-  delete this->m_artist_sel_nation_len;
-  delete this->m_artist_sel_nation_is_null;
-  delete this->m_artist_sel_nation_error;
-  delete this->m_artist_sel_timestamp;
-  delete this->m_artist_sel_timestamp_is_null;
-  delete this->m_artist_sel_timestamp_len;
-  delete this->m_artist_sel_timestamp_error;
-  mysql_stmt_close(this->m_artist_sel_stmt);
+  if (this->m_artist_sel_stmt != NULL) {
+    delete this->m_artist_sel_name;
+    delete this->m_artist_sel_name_len;
+    delete this->m_artist_sel_nation;
+    delete this->m_artist_sel_nation_len;
+    delete this->m_artist_sel_nation_is_null;
+    delete this->m_artist_sel_nation_error;
+    delete this->m_artist_sel_timestamp;
+    delete this->m_artist_sel_timestamp_is_null;
+    delete this->m_artist_sel_timestamp_len;
+    delete this->m_artist_sel_timestamp_error;
+    mysql_stmt_close(this->m_artist_sel_stmt);
+  }
   delete this->m_trigger_chk_string;
   delete this->m_trigger_chk_string_len;
   delete this->m_trigger_chk_timestamp;

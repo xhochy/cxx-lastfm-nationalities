@@ -7,6 +7,8 @@
 
 namespace LastFM {
 
+extern const char * cache_dir;
+
 class Main {
 public:
   Main();
@@ -14,6 +16,8 @@ public:
   std::vector<ArtistData> getData(std::string username);
   std::vector<Scrobbler::Artist> renewArtistsCache(std::string username, 
     std::string cache_file);
+  std::vector<ArtistData> renewResultCache(std::string username, std::string
+    cache_file);
 private:
   void InitMySQL();
   void CleanupMySQL();
