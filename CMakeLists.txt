@@ -14,7 +14,7 @@ find_library(CURL_LIBRARY NAMES curl PATH /usr/lib /usr/local/lib)
 find_library(MYSQL_LIBRARY NAMES mysqlclient PATH /usr/lib /usr/local/lib)
 
 add_library(lastfm-nationalities src/base64.cpp src/ArtistData.cpp src/Main.cpp
-  src/Main-mysql.cpp)
+  src/Main-mysql.cpp src/unicode.cpp)
 
 add_executable(generate-stats.cgi src/generate-stats.cpp)
 add_executable(redirect-image.cgi src/redirect-image.cpp)

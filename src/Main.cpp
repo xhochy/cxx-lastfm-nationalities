@@ -20,7 +20,8 @@ using namespace LastFM;
 using namespace Scrobbler;
 using namespace std;
 
-Main::Main()
+Main::Main() :
+  m_artist_sel_stmt(NULL)
 {
   LIBXML_TEST_VERSION
   this->LoadAPIKey();
@@ -88,10 +89,16 @@ std::vector<ArtistData> Main::getData(std::string username)
   string cache_dir = "/var/cache/lastfm-nationalities";
   string username_encoded = base64_encode(reinterpret_cast<const unsigned char*>(username.c_str()), username.length());
   
-  // if not cached result do
+  struct stat fileinfo;
+  string cache_file = cache_dir + "/result-" + username_encoded + ".xml.gz";
+  int errcode = stat(cache_file.c_str(), &fileinfo);
+  if (errno != ENOENT && errcode == -1)
+    throw runtime_error("Something went wrong in the caching area.");
+  // Cache result for 3.5 days
+  if (errno == ENOENT || fileinfo.st_mtime + 3.5*24*60*60 < time(NULL)) {
+    // result cache is outdated
     // Check for cached artists
-    struct stat fileinfo;
-    string cache_file = cache_dir + "/library-artists-" + username_encoded + ".xml.gz";
+    cache_file = cache_dir + "/library-artists-" + username_encoded + ".xml.gz";
     int errcode = stat(cache_file.c_str(), &fileinfo);
     if (errno != ENOENT && errcode == -1)
       throw runtime_error("Something went wrong in the caching area.");
@@ -119,23 +126,19 @@ std::vector<ArtistData> Main::getData(std::string username)
     }
     
     for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
-      strcpy(this->m_artist_sel_name, i->Name().c_str());
-      *(this->m_artist_sel_name_len) = i->Name().length();
-      if (mysql_stmt_execute(this->m_artist_sel_stmt))
-        throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
-          % mysql_stmt_error(this->m_artist_sel_stmt)).str());
       bool trigger = false;
       string nation = "Unknown";
-      if (mysql_stmt_fetch(this->m_artist_sel_stmt)) {
+      if (this->SelectArtist(i->Name())) {
         trigger = true;
       } else {
         // Is classified, get result
-        if (*(this->m_artist_sel_timestamp) < time(NULL) - 14*24*60*60) trigger = true;
+        if (*(this->m_artist_sel_timestamp) < time(NULL) - 14*24*60*60) 
+          trigger = true;
         nation = this->m_artist_sel_nation;
       }
-      if (mysql_stmt_free_result(this->m_artist_sel_stmt)) 
-        throw runtime_error((boost::format("mysql_stmt_free_result() failed: %1%") 
-          % mysql_stmt_error(this->m_artist_sel_stmt)).str());
+      this->SelectArtistCleanup();
+      
+      // If we decied that the result is outdated, sent a trigger to the DB
       if (trigger) {
         strcpy(this->m_trigger_chk_string, i->Name().c_str());
         *(this->m_trigger_chk_string_len) = i->Name().length();
@@ -162,8 +165,9 @@ std::vector<ArtistData> Main::getData(std::string username)
       valuableData.push_back(ArtistData(*i, nation));
     }
   // else if result cached
-  // ... TODO
-  //
+  } else {
+    // Read from cache
+  }
   /********
                 data = []
                   # Calculate the user's result not every time this code is run

@@ -1,4 +1,5 @@
 #include "ArtistData.h"
+#include "unicode.h"
 #include <boost/format.hpp>
 
 using namespace Scrobbler;
@@ -13,8 +14,8 @@ ArtistData::ArtistData(const Artist &artist, const string &nation) :
 string ArtistData::toJSON() const
 {
   return (boost::format("{\"name\":\"%1%\",\"playcount\":%2%,\"country\":\"%3%\","
-    "\"url\":\"%4%\"}") % this->m_name % this->m_playcount % this->m_nation
-    % this->m_url).str();
+    "\"url\":\"%4%\"}") % convert_UTF8_to_JSON(this->m_name.c_str()) 
+    % this->m_playcount % this->m_nation % this->m_url).str();
 }
 
 std::string ArtistData::Nation() const

@@ -122,7 +122,7 @@ void Main::InitMySQL()
   }
   
   // Prepare the mysql stmts
-  this->InitArtistSelStmt();
+  //this->InitArtistSelStmt();
   this->InitTriggerChkStmt();
   this->InitTriggerInsStmt();
 }
@@ -163,4 +163,25 @@ void Main::CleanupMySQL()
   delete this->m_trigger_ins_string_len;
   mysql_stmt_close(this->m_trigger_ins_stmt);
   mysql_close(&this->m_mysql);
+}
+
+int Main::SelectArtist(std::string artist)
+{
+  // Initialise the statement on its first use
+  if (this->m_artist_sel_stmt == NULL)
+    this->InitArtistSelStmt();
+    
+  strcpy(this->m_artist_sel_name, artist.c_str());
+  *(this->m_artist_sel_name_len) = artist.length();
+  if (mysql_stmt_execute(this->m_artist_sel_stmt))
+    throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
+      % mysql_stmt_error(this->m_artist_sel_stmt)).str());
+  return mysql_stmt_fetch(this->m_artist_sel_stmt);
+}
+
+void Main::SelectArtistCleanup()
+{
+  if (mysql_stmt_free_result(this->m_artist_sel_stmt)) 
+    throw runtime_error((boost::format("mysql_stmt_free_result() failed: %1%") 
+      % mysql_stmt_error(this->m_artist_sel_stmt)).str());
 }

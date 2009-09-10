@@ -21,6 +21,8 @@ private:
   void InitArtistSelStmt();
   void InitTriggerChkStmt();
   void InitTriggerInsStmt();
+  int SelectArtist(std::string artist);
+  void SelectArtistCleanup();
   MYSQL_STMT * CreateStatement(const char * str);
   MYSQL m_mysql;
   // artist_sel_stmt
