@@ -112,24 +112,22 @@ void Main::InitMySQL()
   mysql_file.close();
   
   // Connect to the mysql database
-  mysql_init(&this->m_mysql);
-  mysql_options(&this->m_mysql, MYSQL_READ_DEFAULT_GROUP, "lastfm-nationalities");
-  if (!mysql_real_connect(&this->m_mysql, this->m_mysql_host.c_str(), 
+  this->m_mysql = new MYSQL;
+  mysql_init(this->m_mysql);
+  mysql_options(this->m_mysql, MYSQL_READ_DEFAULT_GROUP, "lastfm-nationalities");
+  if (!mysql_real_connect(this->m_mysql, this->m_mysql_host.c_str(), 
     this->m_mysql_user.c_str(), this->m_mysql_pw.c_str(), this->m_mysql_db.c_str(), 
     0, NULL, 0)) {
     throw runtime_error((boost::format("Failed to connect to database: Error: %s") 
-      % mysql_error(&this->m_mysql)).str());
+      % mysql_error(this->m_mysql)).str());
   }
-  
-  // Prepare the mysql stmts
-  //this->InitArtistSelStmt();
-  this->InitTriggerChkStmt();
-  this->InitTriggerInsStmt();
 }
 
 MYSQL_STMT * Main::CreateStatement(const char * str)
 {
-  MYSQL_STMT * stmt = mysql_stmt_init(&this->m_mysql);
+  if (this->m_mysql == NULL)
+    this->InitMySQL();
+  MYSQL_STMT * stmt = mysql_stmt_init(this->m_mysql);
   if (stmt == NULL)
     throw runtime_error((boost::format("mysql_stmt_init() failed: %1%") 
       % mysql_stmt_error(stmt)).str());
@@ -154,17 +152,24 @@ void Main::CleanupMySQL()
     delete this->m_artist_sel_timestamp_error;
     mysql_stmt_close(this->m_artist_sel_stmt);
   }
-  delete this->m_trigger_chk_string;
-  delete this->m_trigger_chk_string_len;
-  delete this->m_trigger_chk_timestamp;
-  delete this->m_trigger_chk_timestamp_is_null;
-  delete this->m_trigger_chk_timestamp_len;
-  delete this->m_trigger_chk_timestamp_error;
-  mysql_stmt_close(this->m_trigger_chk_stmt);
-  delete this->m_trigger_ins_string;
-  delete this->m_trigger_ins_string_len;
-  mysql_stmt_close(this->m_trigger_ins_stmt);
-  mysql_close(&this->m_mysql);
+  if (this->m_trigger_chk_stmt != NULL) {
+    delete this->m_trigger_chk_string;
+    delete this->m_trigger_chk_string_len;
+    delete this->m_trigger_chk_timestamp;
+    delete this->m_trigger_chk_timestamp_is_null;
+    delete this->m_trigger_chk_timestamp_len;
+    delete this->m_trigger_chk_timestamp_error;
+    mysql_stmt_close(this->m_trigger_chk_stmt);
+  }
+  if (this->m_trigger_ins_stmt != NULL) {
+    delete this->m_trigger_ins_string;
+    delete this->m_trigger_ins_string_len;
+    mysql_stmt_close(this->m_trigger_ins_stmt);
+  }
+  if (this->m_mysql != NULL) {
+    mysql_close(this->m_mysql);
+    delete this->m_mysql;
+  }
 }
 
 int Main::SelectArtist(std::string artist)
@@ -186,4 +191,35 @@ void Main::SelectArtistCleanup()
   if (mysql_stmt_free_result(this->m_artist_sel_stmt)) 
     throw runtime_error((boost::format("mysql_stmt_free_result() failed: %1%") 
       % mysql_stmt_error(this->m_artist_sel_stmt)).str());
+}
+
+int Main::TriggerCheck(string artist)
+{
+  if (this->m_trigger_chk_stmt == NULL)
+    this->InitTriggerChkStmt();
+  strcpy(this->m_trigger_chk_string, artist.c_str());
+  *(this->m_trigger_chk_string_len) = artist.length();
+  if (mysql_stmt_execute(this->m_trigger_chk_stmt))
+    throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
+      % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
+  // Check if already a trigger exists
+  return mysql_stmt_fetch(this->m_trigger_chk_stmt);
+}
+
+void Main::TriggerCheckCleanup()
+{
+  if (mysql_stmt_free_result(this->m_trigger_chk_stmt)) 
+    throw runtime_error((boost::format("mysql_stmt_free_result() failed: %1%") 
+      % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
+}
+
+void Main::InsertTrigger(string artist)
+{
+  if (this->m_trigger_ins_stmt == NULL)
+    this->InitTriggerInsStmt();
+  strcpy(this->m_trigger_ins_string, artist.c_str());
+  *(this->m_trigger_ins_string_len) = artist.length();
+  if (mysql_stmt_execute(this->m_trigger_ins_stmt))
+    throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
+      % mysql_stmt_error(this->m_trigger_ins_stmt)).str());
 }

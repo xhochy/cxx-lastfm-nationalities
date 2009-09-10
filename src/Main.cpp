@@ -21,11 +21,11 @@ using namespace Scrobbler;
 using namespace std;
 
 Main::Main() :
-  m_artist_sel_stmt(NULL)
+  m_artist_sel_stmt(NULL), m_trigger_chk_stmt(NULL), m_trigger_ins_stmt(NULL),
+  m_mysql(NULL)
 {
   LIBXML_TEST_VERSION
   this->LoadAPIKey();
-  this->InitMySQL();
 }
 
 void Main::LoadAPIKey()
@@ -132,27 +132,12 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
     
     // If we decied that the result is outdated, sent a trigger to the DB
     if (trigger) {
-      strcpy(this->m_trigger_chk_string, i->Name().c_str());
-      *(this->m_trigger_chk_string_len) = i->Name().length();
-      if (mysql_stmt_execute(this->m_trigger_chk_stmt))
-        throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
-          % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
-      // Check if already a trigger exists
-      if (mysql_stmt_fetch(this->m_trigger_chk_stmt) == 0) {
-        // there is already a trigger in the DB
+      // Check if there is already a trigger for this artist in the DB
+      if (this->TriggerCheck(i->Name()) == 0)
         trigger = false;
-      }
-      if (mysql_stmt_free_result(this->m_trigger_chk_stmt)) 
-        throw runtime_error((boost::format("mysql_stmt_free_result() failed: %1%") 
-          % mysql_stmt_error(this->m_trigger_chk_stmt)).str());
+      this->TriggerCheckCleanup();
       // If we still should trigger, so post the tigger
-      if (trigger) {
-        strcpy(this->m_trigger_ins_string, i->Name().c_str());
-        *(this->m_trigger_ins_string_len) = i->Name().length();
-        if (mysql_stmt_execute(this->m_trigger_ins_stmt))
-          throw runtime_error((boost::format("mysql_stmt_execute() failed: %1%") 
-            % mysql_stmt_error(this->m_trigger_ins_stmt)).str());
-      }
+      if (trigger) this->InsertTrigger(i->Name());
     }
     valuableData.push_back(ArtistData(*i, nation));
   }
