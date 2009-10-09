@@ -4,7 +4,9 @@ project (CXXLASTFM_NATIONALITIES)
 # Find headers
 find_path(SCROBBLER_INCLUDE_DIR scrobbler/library.h /usr/include /usr/local/include)
 find_path(LIBXML2_INCLUDE_DIR libxml/parser.h /usr/include/libxml2)
-include_directories(${SCROBBLER_INCLUDE_DIR} ${LIBXML2_INCLUDE_DIR})
+find_path(CURL_INCLUDE_DIR curl/curl.h /usr/include)
+include_directories(${SCROBBLER_INCLUDE_DIR} ${LIBXML2_INCLUDE_DIR} 
+	${CURL_INCLUDE_DIR})
 
 # Find libraries
 find_library(CGICC_LIBRARY NAMES cgicc PATH /usr/lib /usr/local/lib) 
