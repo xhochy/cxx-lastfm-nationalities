@@ -1,19 +1,6 @@
 // STL
-#include <cstring>
-#include <exception>
 #include <iostream>
 #include <fstream>
-#include <cstdio>
-#include <cerrno>
-#include <stdexcept>
-
-// Boost
-#include <boost/format.hpp>
-
-// POSIX/UNIX
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 // Cgicc
 #include <cgicc/Cgicc.h>
@@ -21,12 +8,6 @@
 
 // Scrobbler
 #include <scrobbler/library.h>
-
-// MySQL
-#include <mysql/mysql.h>
-
-// zlib
-#include <zlib.h>
 
 #include "ArtistData.h"
 #include "Main.h"
