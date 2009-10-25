@@ -2,11 +2,6 @@
 #include "base64.h"
 
 #include <boost/format.hpp>
-#include <cerrno>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <iostream>
 #include <libxml/parser.h>
 #include <scrobbler/base.h>
 #include <scrobbler/library.h>
@@ -16,6 +11,13 @@
 #include <unistd.h>
 #include <zlib.h>
 
+// Standard C/C++ includes
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+
 using namespace LastFM;
 using namespace Scrobbler;
 using namespace std;
@@ -24,7 +26,7 @@ Main::Main() :
   m_artist_sel_stmt(NULL), m_trigger_chk_stmt(NULL), m_trigger_ins_stmt(NULL),
   m_mysql(NULL)
 {
-  LIBXML_TEST_VERSION
+  LIBXML_TEST_VERSION;
   this->LoadAPIKey();
 }
 
@@ -65,7 +67,7 @@ std::vector<Artist> Main::renewArtistsCache(string username, string cache_file)
   int rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
   if (rc < 0)
     throw runtime_error("Error at xmlTextWriterStartDocument");
-  rc = xmlTextWriterStartElement(writer, BAD_CAST "artists");
+  rc = xmlTextWriterStartElement(writer, BAD_CAST("artists"));
   if (rc < 0) throw runtime_error("Error at xmlTextWriterStartElement");
  
   for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
@@ -110,7 +112,7 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
     xmlDocPtr doc = xmlReadDoc(reinterpret_cast<const xmlChar *>(input.c_str()), NULL, NULL, 0);
     xmlNodePtr root = xmlDocGetRootElement(doc);
     for (xmlNodePtr node = root->children; node; node = node->next) {
-      if (xmlStrEqual(node->name, BAD_CAST "artist")) {
+      if (xmlStrEqual(node->name, BAD_CAST("artist"))) {
         artists.push_back(Artist::parse(node));
       }
     }
@@ -156,7 +158,7 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
   int rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
   if (rc < 0)
     throw runtime_error("Error at xmlTextWriterStartDocument");
-  rc = xmlTextWriterStartElement(writer, BAD_CAST "data");
+  rc = xmlTextWriterStartElement(writer, BAD_CAST("data"));
   if (rc < 0) throw runtime_error("Error at xmlTextWriterStartElement");
  
   for (vector<ArtistData>::const_iterator i = valuableData.begin(); i != valuableData.end(); ++i) {
@@ -187,7 +189,7 @@ std::vector<ArtistData> Main::getData(std::string username)
   if (errno != ENOENT && errcode == -1)
     throw runtime_error("Something went wrong in the caching area.");
   // Cache result for 3.5 days
-  if (errno == ENOENT || fileinfo.st_mtime + 3.5*24*60*60 < time(NULL)) {
+  if (errno == ENOENT || fileinfo.st_mtime + 2*24*60*60 < time(NULL)) {
     // result cache is outdated
     artists = this->renewResultCache(username, cache_file);
   } else {
@@ -202,7 +204,7 @@ std::vector<ArtistData> Main::getData(std::string username)
     xmlDocPtr doc = xmlReadDoc(reinterpret_cast<const xmlChar *>(input.c_str()), NULL, NULL, 0);
     xmlNodePtr root = xmlDocGetRootElement(doc);
     for (xmlNodePtr node = root->children; node; node = node->next) {
-      if (xmlStrEqual(node->name, BAD_CAST "a")) {
+      if (xmlStrEqual(node->name, BAD_CAST("a"))) {
         artists.push_back(ArtistData::parse(node));
       }
     }
