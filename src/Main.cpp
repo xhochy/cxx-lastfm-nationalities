@@ -69,11 +69,11 @@ std::vector<Artist> Main::renewArtistsCache(string username, string cache_file)
     throw runtime_error("Error at xmlTextWriterStartDocument");
   rc = xmlTextWriterStartElement(writer, BAD_CAST("artists"));
   if (rc < 0) throw runtime_error("Error at xmlTextWriterStartElement");
- 
+
   for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
     i->writeXml(writer);
   }
-  
+
   rc = xmlTextWriterEndDocument(writer);
   if (rc < 0) throw runtime_error("Error at xmlTextWriterEndDocument");
   xmlFreeTextWriter(writer);
@@ -81,7 +81,7 @@ std::vector<Artist> Main::renewArtistsCache(string username, string cache_file)
   gzFile zipfile = gzopen(cache_file.c_str(), "wb9");
   gzputs(zipfile, (const char *)buf->content);
   gzclose(zipfile);
-  
+
   return artists;
 }
 
@@ -90,15 +90,15 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
   vector<ArtistData> valuableData;
   struct stat fileinfo;
   string username_encoded = base64_encode(reinterpret_cast<const unsigned char*>(username.c_str()), username.length());
-  
+
   // Check for cached artists
   string cache_file = string(cache_dir) + "/library-artists-" + username_encoded + ".xml.gz";
   int errcode = stat(cache_file.c_str(), &fileinfo);
   if (errno != ENOENT && errcode == -1)
     throw runtime_error("Something went wrong in the caching area.");
   std::vector<Artist> artists;
-  // Cache library for *7 days*
-  if (errno == ENOENT || fileinfo.st_mtime + 7*24*60*60 < time(NULL)) {
+  // Cache library for *30 days*
+  if (errno == ENOENT || fileinfo.st_mtime + 30*24*60*60 < time(NULL)) {
     // Cache is outdated
     artists = this->renewArtistsCache(username, cache_file);
   } else {
@@ -118,7 +118,7 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
     }
     xmlFreeDoc(doc);
   }
-  
+
   for (vector<Artist>::const_iterator i = artists.begin(); i != artists.end(); ++i) {
     bool trigger = false;
     string nation = "Unknown";
@@ -126,12 +126,12 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
       trigger = true;
     } else {
       // Is classified, get result
-      if (*(this->m_artist_sel_timestamp) < time(NULL) - 14*24*60*60) 
+      if (*(this->m_artist_sel_timestamp) < time(NULL) - 30*24*60*60)
         trigger = true;
       nation = this->m_artist_sel_nation;
     }
     this->SelectArtistCleanup();
-    
+
     // If we decied that the result is outdated, sent a trigger to the DB
     if (trigger) {
       // Check if there is already a trigger for this artist in the DB
@@ -143,7 +143,7 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
     }
     valuableData.push_back(ArtistData(*i, nation));
   }
-  
+
   // write to cache
   // Create a new XML buffer, to which the XML document will be written
   xmlBufferPtr buf = xmlBufferCreate();
@@ -153,18 +153,18 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
   xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
   if (writer == NULL)
     throw runtime_error("Error creating the xml writer");
-  // Start the document with the xml default for the version, encoding 
+  // Start the document with the xml default for the version, encoding
   // UTF-8 and the default for the standalone declaration.
   int rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
   if (rc < 0)
     throw runtime_error("Error at xmlTextWriterStartDocument");
   rc = xmlTextWriterStartElement(writer, BAD_CAST("data"));
   if (rc < 0) throw runtime_error("Error at xmlTextWriterStartElement");
- 
+
   for (vector<ArtistData>::const_iterator i = valuableData.begin(); i != valuableData.end(); ++i) {
     i->writeXml(writer);
   }
-  
+
   rc = xmlTextWriterEndDocument(writer);
   if (rc < 0) throw runtime_error("Error at xmlTextWriterEndDocument");
   xmlFreeTextWriter(writer);
@@ -172,7 +172,7 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
   gzFile zipfile = gzopen(result_cache_file.c_str(), "wb9");
   gzputs(zipfile, (const char *)buf->content);
   gzclose(zipfile);
-  
+
   return valuableData;
 }
 
@@ -182,7 +182,7 @@ std::vector<ArtistData> Main::getData(std::string username)
 {
   vector<ArtistData> artists;
   string username_encoded = base64_encode(reinterpret_cast<const unsigned char*>(username.c_str()), username.length());
-  
+ 
   struct stat fileinfo;
   string cache_file = string(cache_dir) + "/result-" + username_encoded + ".xml.gz";
   int errcode = stat(cache_file.c_str(), &fileinfo);

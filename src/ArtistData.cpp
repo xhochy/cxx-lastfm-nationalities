@@ -14,11 +14,11 @@ ArtistData::ArtistData(const Artist &artist, const string &nation) :
 string ArtistData::toJSON() const
 {
   return (boost::format("{\"name\":\"%1%\",\"playcount\":%2%,\"country\":\"%3%\","
-    "\"url\":\"%4%\"}") % convert_UTF8_to_JSON(this->m_name.c_str()) 
+    "\"url\":\"%4%\"}") % convert_UTF8_to_JSON(this->m_name.c_str())
     % this->m_playcount % this->m_nation % this->m_url).str();
 }
 
-const char * getNodeContent(xmlNodePtr node) 
+const char * getNodeContent(xmlNodePtr node)
 {
   if (node->children == NULL)
     return "";
@@ -33,33 +33,33 @@ const char * getNodeContent(xmlNodePtr node)
  * Shortnamed tags are used to keep the data as small as possible.
  */
 void ArtistData::writeXml(xmlTextWriterPtr writer) const
-{  
+{
   // <a>
-  if (xmlTextWriterStartElement(writer, BAD_CAST "a") < 0) 
+  if (xmlTextWriterStartElement(writer, BAD_CAST "a") < 0)
     throw runtime_error("Error at xmlTextWriterStartElement");
-    
+
   // playcount as <p>..</p>
-  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "p", "%d", 
+  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "p", "%d",
     this->m_playcount) < 0)
     throw runtime_error("Error at xmlTextWriterWriteFormatElement");
 
   // url as <u>..</u>
-  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "u", "%s", 
+  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "u", "%s",
     this->m_url.c_str()) < 0)
     throw runtime_error("Error at xmlTextWriterWriteFormatElement");
 
   // name as <n>..</n>
-  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "n", "%s", 
+  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "n", "%s",
     this->m_name.c_str()) < 0)
     throw runtime_error("Error at xmlTextWriterWriteFormatElement");
 
   // country as <c>..</c>
-  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "c", "%s", 
+  if (xmlTextWriterWriteFormatElement(writer, BAD_CAST "c", "%s",
     this->m_nation.c_str()) < 0)
     throw runtime_error("Error at xmlTextWriterWriteFormatElement");
-    
+
   // </a>
-  if (xmlTextWriterEndElement(writer) < 0) 
+  if (xmlTextWriterEndElement(writer) < 0)
     throw runtime_error("Error at xmlTextWriterEndElement");
 }
 

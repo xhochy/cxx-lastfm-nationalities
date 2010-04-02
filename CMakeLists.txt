@@ -60,24 +60,8 @@ endif(NOT MYSQL_INCLUDE_DIR)
 ## BOOST ##
 ###########
 
-find_package(Boost 1.40.0 REQUIRED thread system)
+find_package(Boost 1.34.0)
 include_directories(${Boost_INCLUDE_DIR})
-
-##############
-## Hochheim ##
-##############
-
-find_library(HOCHHEIM_LIBRARY NAMES hochheim PATH $ENV{HOCHHEIM}/lib 
-    /usr/lib /usr/local/lib)
-if(NOT HOCHHEIM_LIBRARY)
-    message(FATAL_ERROR "Hochheim library not found")
-endif(NOT HOCHHEIM_LIBRARY)
-
-find_path(HOCHHEIM_INCLUDE_DIR hochheim/Server.h $ENV{HOCHHEIM}/include)
-if(NOT HOCHHEIM_INCLUDE_DIR)
-    message(FATAL_ERROR "Hochheim headers not found")
-endif(NOT HOCHHEIM_INCLUDE_DIR)
-include_directories(${HOCHHEIM_INCLUDE_DIR})
 
 # Find libraries
 find_library(CGICC_LIBRARY NAMES cgicc PATH /usr/lib /usr/local/lib) 
@@ -97,10 +81,6 @@ target_link_libraries(redirect-image-list.cgi lastfm-nationalities ${CGICC_LIBRA
   ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
 target_link_libraries(redirect-image-big.cgi lastfm-nationalities ${CGICC_LIBRARY} 
   ${SCROBBLER_LIBRARY} ${LIBXML2_LIBRARY} ${CURL_LIBRARY} ${MYSQL_LIBRARY})
-  
-add_executable(server.http src/server.cpp)
-target_link_libraries(server.http ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}
-    ${HOCHHEIM_LIBRARY})
 
 INSTALL(TARGETS generate-stats.cgi redirect-image.cgi redirect-image-list.cgi 
   redirect-image-big.cgi DESTINATION bin)
