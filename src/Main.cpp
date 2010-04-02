@@ -113,7 +113,10 @@ vector<ArtistData> Main::renewResultCache(string username, string result_cache_f
     xmlNodePtr root = xmlDocGetRootElement(doc);
     for (xmlNodePtr node = root->children; node; node = node->next) {
       if (xmlStrEqual(node->name, BAD_CAST("artist"))) {
-        artists.push_back(Artist::parse(node));
+        Artist artist = Artist::parse(node);
+        if (artist.Playcount() > 20) {
+          artists.push_back(Artist::parse(node));
+        }
       }
     }
     xmlFreeDoc(doc);
